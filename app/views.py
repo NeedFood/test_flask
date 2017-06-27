@@ -24,12 +24,23 @@ def before_request():
         db.session.commit()
 
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    user = g.user
-    posts = [
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(body=form.post.data,
+                    timestamp=datetime.utcnow(),
+                    author=g.user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('index'))
+
+    posts = g.user.followed_posts().all()
+
+    ''' [
         {
             'author': {'nickname': 'John'},
             'body': 'Beautiful day in Portland!'
@@ -38,10 +49,11 @@ def index():
             'author': {'nickname': 'Susan'},
             'body': 'The Avengers movie was so cool!'
         }
-    ]
+    ]'''
+
     return render_template('index.html',
                            title='Home',
-                           user=user,
+                           form=form,
                            posts=posts)
 
 
@@ -150,9 +162,9 @@ def unfollow(nickname):
 @app.route('/follow/<nickname>')
 @login_required
 def follow(nickname):
-    user = User.query.filter_by(nickname=nickname)
-    if user in None:
-        flash('User {} not found'.format(nickname))
+    user = User.query.filter_by(nickname=nickname).first()
+    if user is None:
+        flash('User %s not found' % nickname)
         return redirect(url_for('index'))
     if user == g.user:
         flash('Your can\'t follow yourself')
