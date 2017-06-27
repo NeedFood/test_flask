@@ -75,7 +75,7 @@ class User(db.Model):
             return self
 
     def is_following(self, user):
-        return self.followed.filter(followers.c.followed_id == user.id).count > 0https://github.com/NeedFood/test_flask.git
+        return self.followed.filter(followers.c.followed_id == user.id).count > 0
 
     def __repr__(self):
         return '<User %r>' % self.nickname
